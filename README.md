@@ -6,26 +6,45 @@ There are many tutorials about [webtask](https://webtask.io) and [stripe](https:
 ## Back-end
 The `js` part can look like this:
 ```js
-var stripe = require('stripe');
-module.exports = function (ctx, cb) {
-    console.log('Token: ', ctx.body.stripeToken);
-    stripe(ctx.secrets.stripeSecretKey).charges.create({
-amount: the_amount_of_money_you_want_to_charge,
-currency: 'the_currency',
-source: ctx.body.stripeToken,
-description: 'a_description_for_the_expense'
-}, function (error, charge) {
-console.log("Error: ", JSON.stringify(error));
-console.log("Charge: ", JSON.stringify(charge));
-cb(null, 'Thank you for your business!');
-});
+module.exports = function (ctx, req, res) {
+  //create the stripe objct
+  //webtask won't persist objects between requests
+  //so we need to create this again each time
+  var stripe = require('stripe')(ctx.secrets.STRIPE_PRIVATE_KEY);
+
+  //charge the card
+  //this will do a single charge of 1GBP
+  //to charge different amounts, we'll need to pass the
+  //amount in to our webtask as a parameter, possibly
+  //via a hidden form field
+  stripe.charges.create({
+    amount: 100,
+    currency: 'gbp',
+    source: ctx.body.stripeToken,
+    description: 'Hello world'
+  }, function (error, charge) {
+    //this function will be called asynchronously
+    //after stripe has charged the card
+    //we need to add logic in here to check for
+    //all of the various possible errors outlied in
+    //the Stripe documentation
+    console.log("Error: " + JSON.stringify(error));
+    console.log("Charge: " + JSON.stringify(charge));
+    //we also need to decide what to do in case of an
+    //error or on success
+    //this example simply prints the hellow world message
+    //but we might want to redirect to a thank you page
+    //or display appropriate error messaging in case of an error
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    return res.end('<h1>Hello world!</h1>');
+  });
 };
 ```
 You'll have to replace `the_amount_of_money_you_want_to_charge`, `a_description_for_the_expense`, and `the_currency` in the code above with actual values. 
 
-Put that into some `js` file (say, `file.js`). You'll need to create a webtask from that file and provide the private stripe-key. Using webtask's API you can:
+Put that into some `js` file (say, `webtask.js`). You'll need to create a webtask from that file and provide the private stripe-key. You must also specify the dependency on the stripe NPM library, and instruct webtask to parse the body of the request and make it available in the 'ctx.body' property. You can do this Using webtask's CLI:
 ```bash
-wt create file.js --secret STRIPE_PRIVATE_KEY=your_private_key_from_stripe
+wt create webtask.js --secret STRIPE_PRIVATE_KEY=your_private_key_from_stripe --dependency stripe@latest --parse-body
 ```
 Replace `your_private_key_from_stripe` with your actual private stripe-key. 
 
