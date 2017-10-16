@@ -1,5 +1,5 @@
 # stripe-webtask
-How not to use webtask and stripe to charge a set amount
+How ~~not~~ to use webtask and stripe to charge a set amount
 
 There are many tutorials about [webtask](https://webtask.io) and [stripe](https://stripe.com), a few show how to use these two services in order to charge a credit card with a set amount from a static server (see [this one](https://tomasz.janczuk.org/2016/01/accept-stripe-payments-without-backend-using-webtasks.html) for example). Here, I will outline a bare-bone-example that does not work. 
 
